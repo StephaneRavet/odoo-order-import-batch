@@ -1,5 +1,7 @@
 # odoo-order-import-batch
 
+> Compatible Odoo version: **18**
+
 This Odoo module provides batch import functionality for orders.
 
 ## Structure
