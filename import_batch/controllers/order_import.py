@@ -3,6 +3,7 @@ from odoo.http import request
 import json
 from datetime import datetime
 import logging
+from odoo.exceptions import ValidationError, UserError
 
 _logger = logging.getLogger(__name__)
 
@@ -12,13 +13,14 @@ class OrderImportController(http.Controller):
         try:
             content = request.jsonrequest
             if not content or not isinstance(content, list):
-                return {'error': 'Format de données invalide'}
+                return {'error': 'Format de données invalide', 'code': 'INVALID_FORMAT'}
 
             order_data = content[0]['message']['content']
             
             # Validation des données requises
-            if not self._validate_order_data(order_data):
-                return {'error': 'Données de commande incomplètes'}
+            validation_result = self._validate_order_data(order_data)
+            if not validation_result['valid']:
+                return {'error': validation_result['message'], 'code': 'VALIDATION_ERROR'}
 
             # Vérification si la commande existe déjà
             existing_order = self._check_existing_order(order_data['document']['orderNumber'])
@@ -26,40 +28,101 @@ class OrderImportController(http.Controller):
                 return {
                     'warning': 'Commande déjà existante',
                     'order_id': existing_order.id,
-                    'message': f'La commande {order_data["document"]["orderNumber"]} existe déjà'
+                    'message': f'La commande {order_data["document"]["orderNumber"]} existe déjà',
+                    'code': 'ORDER_EXISTS'
                 }
 
             # Création du partenaire client
-            partner = self._create_or_update_partner(order_data['customer'])
+            try:
+                partner = self._create_or_update_partner(order_data['customer'])
+            except Exception as e:
+                return {'error': f'Erreur lors de la création du partenaire: {str(e)}', 'code': 'PARTNER_ERROR'}
             
             # Création de la commande
-            order = self._create_sale_order(order_data, partner)
+            try:
+                order = self._create_sale_order(order_data, partner)
+            except Exception as e:
+                return {'error': f'Erreur lors de la création de la commande: {str(e)}', 'code': 'ORDER_ERROR'}
             
             # Création des lignes de commande
-            self._create_order_lines(order, order_data['orderLines'])
+            try:
+                self._create_order_lines(order, order_data['orderLines'])
+            except Exception as e:
+                return {'error': f'Erreur lors de la création des lignes: {str(e)}', 'code': 'LINES_ERROR'}
             
             # Création des sessions de formation
-            self._create_training_sessions(order, order_data['training'])
+            try:
+                self._create_training_sessions(order, order_data['training'])
+            except Exception as e:
+                return {'error': f'Erreur lors de la création des sessions: {str(e)}', 'code': 'SESSIONS_ERROR'}
 
             return {
                 'success': True,
                 'order_id': order.id,
-                'message': 'Commande importée avec succès'
+                'message': 'Commande importée avec succès',
+                'code': 'SUCCESS'
             }
 
+        except ValidationError as ve:
+            _logger.error(f"Erreur de validation: {str(ve)}")
+            return {'error': str(ve), 'code': 'VALIDATION_ERROR'}
+        except UserError as ue:
+            _logger.error(f"Erreur utilisateur: {str(ue)}")
+            return {'error': str(ue), 'code': 'USER_ERROR'}
         except Exception as e:
             _logger.error(f"Erreur lors de l'importation de la commande: {str(e)}")
-            return {'error': str(e)}
+            return {'error': str(e), 'code': 'UNKNOWN_ERROR'}
+
+    def _validate_order_data(self, data):
+        """Validation détaillée des données de la commande"""
+        required_fields = ['document', 'customer', 'orderLines', 'amounts']
+        if not all(field in data for field in required_fields):
+            return {'valid': False, 'message': 'Champs obligatoires manquants'}
+
+        # Validation du document
+        if not data['document'].get('orderNumber'):
+            return {'valid': False, 'message': 'Numéro de commande manquant'}
+        if not data['document'].get('orderDate'):
+            return {'valid': False, 'message': 'Date de commande manquante'}
+
+        # Validation du client
+        if not data['customer'].get('companyName'):
+            return {'valid': False, 'message': 'Nom de l\'entreprise manquant'}
+        if not data['customer'].get('siren'):
+            return {'valid': False, 'message': 'SIREN manquant'}
+
+        # Validation des lignes
+        if not data['orderLines']:
+            return {'valid': False, 'message': 'Aucune ligne de commande'}
+        for line in data['orderLines']:
+            if not line.get('reference'):
+                return {'valid': False, 'message': 'Référence produit manquante'}
+            if not line.get('quantity') or line['quantity'] <= 0:
+                return {'valid': False, 'message': 'Quantité invalide'}
+            if not line.get('unitPrice') or line['unitPrice'] <= 0:
+                return {'valid': False, 'message': 'Prix unitaire invalide'}
+
+        # Validation des montants
+        if not data['amounts'].get('totalExclTax'):
+            return {'valid': False, 'message': 'Montant HT manquant'}
+
+        # Validation des sessions de formation
+        if data.get('training'):
+            if not data['training'].get('sessions'):
+                return {'valid': False, 'message': 'Aucune session de formation définie'}
+            for session in data['training']['sessions']:
+                if not session.get('date'):
+                    return {'valid': False, 'message': 'Date de session manquante'}
+                if not session.get('startTimes') or not session.get('endTimes'):
+                    return {'valid': False, 'message': 'Horaires de session manquants'}
+
+        return {'valid': True}
 
     def _check_existing_order(self, order_number):
         """Vérifie si une commande existe déjà avec ce numéro"""
         return request.env['sale.order'].search([
             ('client_order_ref', '=', order_number)
         ], limit=1)
-
-    def _validate_order_data(self, data):
-        required_fields = ['document', 'customer', 'orderLines', 'amounts']
-        return all(field in data for field in required_fields)
 
     def _create_or_update_partner(self, customer_data):
         partner_obj = request.env['res.partner']
@@ -92,6 +155,7 @@ class OrderImportController(http.Controller):
             'customer_rank': 1,
             'type': 'contact',
             'company_type': 'company',
+            'active': True,
         }
 
         if not partner:
@@ -114,12 +178,14 @@ class OrderImportController(http.Controller):
             'amount_total': order_data['amounts']['totalInclTax'],
             'state': 'sale',
             'company_id': request.env.company.id,
+            'user_id': request.env.user.id,
+            'team_id': request.env['crm.team'].search([], limit=1).id,
         })
 
     def _create_order_lines(self, order, order_lines):
         sale_order_line_obj = request.env['sale.order.line']
         
-        for line in order_lines:
+        for sequence, line in enumerate(order_lines, start=10):
             # Vérification si la ligne existe déjà
             existing_line = sale_order_line_obj.search([
                 ('order_id', '=', order.id),
@@ -137,6 +203,7 @@ class OrderImportController(http.Controller):
                     'price_unit': line['unitPrice'],
                     'discount': line['discountPercent'],
                     'price_subtotal': line['totalExclTax'],
+                    'sequence': sequence,
                 })
 
     def _create_training_sessions(self, order, training_data):
@@ -162,11 +229,16 @@ class OrderImportController(http.Controller):
                     'location': training_data['location'],
                     'modality': training_data['modality'],
                     'state': 'confirmed',
+                    'company_id': request.env.company.id,
                 })
 
     def _get_payment_term(self, payment_terms):
         payment_term_obj = request.env['account.payment.term']
-        return payment_term_obj.search([('name', '=', payment_terms)], limit=1)
+        term = payment_term_obj.search([('name', '=', payment_terms)], limit=1)
+        if not term:
+            _logger.warning(f"Terme de paiement non trouvé: {payment_terms}")
+            return payment_term_obj.search([], limit=1)
+        return term
 
     def _get_or_create_product(self, line_data):
         product_obj = request.env['product.product']
@@ -185,13 +257,18 @@ class OrderImportController(http.Controller):
                 'uom_po_id': self._get_uom(line_data['unit']).id,
                 'invoice_policy': 'order',
                 'purchase_method': 'purchase',
+                'active': True,
             })
         
         return product
 
     def _get_uom(self, unit_name):
         uom_obj = request.env['uom.uom']
-        return uom_obj.search([('name', '=', unit_name)], limit=1)
+        uom = uom_obj.search([('name', '=', unit_name)], limit=1)
+        if not uom:
+            _logger.warning(f"Unité de mesure non trouvée: {unit_name}")
+            return uom_obj.search([('name', '=', 'Unité')], limit=1)
+        return uom
 
     def _get_or_create_trainer(self, trainer_name):
         partner_obj = request.env['res.partner']
@@ -207,6 +284,7 @@ class OrderImportController(http.Controller):
                 'is_trainer': True,
                 'type': 'contact',
                 'company_type': 'person',
+                'active': True,
             })
         
         return trainer 
