@@ -78,29 +78,26 @@ class OrderImportController(http.Controller):
             if not partner and customer_data.get('tva'):
                 partner = partner_obj.search([('vat', '=', customer_data['tva'])], limit=1)
         
+        partner_vals = {
+            'name': customer_data['companyName'],
+            'siren': siren,
+            'siret': customer_data['siret'][0].replace(' ', '') if customer_data['siret'] else False,
+            'vat': customer_data['tva'],
+            'street': customer_data['addresses'][0]['addressLine'],
+            'zip': customer_data['addresses'][0]['postalCode'],
+            'city': customer_data['addresses'][0]['city'],
+            'country_id': request.env['res.country'].search([('name', '=', customer_data['addresses'][0]['country'])], limit=1).id,
+            'email': customer_data['billingEmail'],
+            'phone': customer_data.get('contact', {}).get('phone', False),
+            'customer_rank': 1,
+            'type': 'contact',
+            'company_type': 'company',
+        }
+
         if not partner:
-            partner = partner_obj.create({
-                'name': customer_data['companyName'],
-                'siren': siren,
-                'siret': customer_data['siret'][0].replace(' ', '') if customer_data['siret'] else False,
-                'vat': customer_data['tva'],
-                'street': customer_data['addresses'][0]['addressLine'],
-                'zip': customer_data['addresses'][0]['postalCode'],
-                'city': customer_data['addresses'][0]['city'],
-                'country_id': request.env['res.country'].search([('name', '=', customer_data['addresses'][0]['country'])], limit=1).id,
-                'email': customer_data['billingEmail'],
-                'phone': customer_data.get('contact', {}).get('phone', False),
-                'customer_rank': 1,
-            })
+            partner = partner_obj.create(partner_vals)
         else:
-            # Mise à jour des informations si nécessaire
-            partner.write({
-                'name': customer_data['companyName'],
-                'street': customer_data['addresses'][0]['addressLine'],
-                'zip': customer_data['addresses'][0]['postalCode'],
-                'city': customer_data['addresses'][0]['city'],
-                'email': customer_data['billingEmail'],
-            })
+            partner.write(partner_vals)
         
         return partner
 
@@ -115,6 +112,8 @@ class OrderImportController(http.Controller):
             'amount_untaxed': order_data['amounts']['totalExclTax'],
             'amount_tax': order_data['amounts']['totalVAT'],
             'amount_total': order_data['amounts']['totalInclTax'],
+            'state': 'sale',
+            'company_id': request.env.company.id,
         })
 
     def _create_order_lines(self, order, order_lines):
@@ -137,6 +136,7 @@ class OrderImportController(http.Controller):
                     'product_uom': self._get_uom(line['unit']),
                     'price_unit': line['unitPrice'],
                     'discount': line['discountPercent'],
+                    'price_subtotal': line['totalExclTax'],
                 })
 
     def _create_training_sessions(self, order, training_data):
@@ -161,6 +161,7 @@ class OrderImportController(http.Controller):
                     'end_time': session['endTimes'][0],
                     'location': training_data['location'],
                     'modality': training_data['modality'],
+                    'state': 'confirmed',
                 })
 
     def _get_payment_term(self, payment_terms):
@@ -178,6 +179,12 @@ class OrderImportController(http.Controller):
                 'default_code': line_data['reference'],
                 'type': 'service',
                 'categ_id': request.env.ref('product.product_category_services').id,
+                'list_price': line_data['unitPrice'],
+                'standard_price': line_data['unitPrice'],  # Prix de revient
+                'uom_id': self._get_uom(line_data['unit']).id,
+                'uom_po_id': self._get_uom(line_data['unit']).id,
+                'invoice_policy': 'order',
+                'purchase_method': 'purchase',
             })
         
         return product
@@ -198,6 +205,8 @@ class OrderImportController(http.Controller):
             trainer = partner_obj.create({
                 'name': trainer_name,
                 'is_trainer': True,
+                'type': 'contact',
+                'company_type': 'person',
             })
         
         return trainer 
