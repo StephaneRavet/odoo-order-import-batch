@@ -1,129 +1,131 @@
-{
-	"document": {
-		"orderNumber": "ACDE25-01771",
-		"orderDate": "2025-03-19T00:00:00Z",
-		"page": 1
-	},
-	"vendor": {
-		"companyName": "WebCraft Learning",
-		"legalForm": "SARL",
-		"rcs": "RCS LYON n° 982 223 000",
-		"headquarters": "1 rue Roger Lenoir, 69100 Villeurbanne",
-		"representative": "Stéphane RAVET",
-		"siret": "982 223 000 00018",
-		"naf": "8559A",
-		"tva": "FR05982223000",
-		"nda": "84 69 21950 69"
-	},
-	"customer": {
-		"companyName": "SOCIETE ANONYME",
-		"addresses": [
-			{
-				"addressLine": "123 rue Example",
-				"postalCode": "75000",
-				"city": "PARIS",
-				"country": "France"
-			}
-		],
-		"contact": {
-			"name": "John Doe",
-			"email": "contact@example.com"
-		},
-		"billingEmail": "facturation@example.com",
-		"code": "10110",
-		"siren": "123 456 789",
-		"rcs": "RCS Paris 123 456 789",
-		"naf": null,
-		"siret": [
-			"123 456 789 00000"
-		],
-		"tva": "FR12345678900",
-		"declarationNumber": "11 75 12345 75",
-		"legalForm": "SARL",
-		"capital": "10000"
-	},
-	"orderLines": [
-		{
-			"reference": "JVS-ANGU",
-			"label": "ANGULAR 18 ET VERSIONS ANTÉRIEURES - DÉVELOPPEMENT D'APPLICATIONS WEB",
-			"internalCode": "SE25-190417",
-			"quantity": 3,
-			"unit": "Jour",
-			"unitPrice": 650,
-			"discountPercent": 0,
-			"totalExclTax": 1950
-		}
-	],
-	"training": {
-		"trainer": "Stéphane Ravet",
-		"title": "ANGULAR 18 ET VERSIONS ANTÉRIEURES - DÉVELOPPEMENT D'APPLICATIONS WEB",
-		"content": [
-			"Formation : ANGULAR 18 ET VERSIONS ANTÉRIEURES - DÉVELOPPEMENT D'APPLICATIONS WEB",
-			"Sanction : Aucune"
-		],
-		"means": "Pédagogie basée sur l'alternance de la théorie et de la pratique pour permettre l'appropriation et progressivité par les apprenants selon les objectifs du programme",
-		"modality": "Distanciel",
-		"location": "Classe à distance (Teams)",
-		"sessions": [
-			{
-				"date": "2025-03-24",
-				"startTimes": [
-					"09:00"
-				],
-				"breaks": [
-					{
-						"start": "12:30",
-						"end": "13:30"
-					}
-				],
-				"endTimes": [
-					"17:30"
-				]
-			},
-			{
-				"date": "2025-03-25",
-				"startTimes": [
-					"09:00"
-				],
-				"breaks": [
-					{
-						"start": "12:30",
-						"end": "13:30"
-					}
-				],
-				"endTimes": [
-					"17:30"
-				]
-			},
-			{
-				"date": "2025-03-26",
-				"startTimes": [
-					"09:00"
-				],
-				"breaks": [
-					{
-						"start": "12:30",
-						"end": "13:30"
-					}
-				],
-				"endTimes": [
-					"16:00"
-				]
-			}
-		]
-	},
-	"amounts": {
-		"totalExclTax": 1950,
-		"totalVAT": 0,
-		"totalInclTax": 1950,
-		"currency": "EUR"
-	},
-	"paymentTerms": "30 jours nets date de réception du dossier complet",
-	"conditions": [
-		"En nos locaux : la prise en charge de votre salle, de vos stagiaires chaque matin et tout au long de la journée.",
-		"La restitution des feuilles de présences émargées par les stagiaires et vous-même, des fiches d'évaluation de fin de stage dûment remplies, de votre fiche d'intervention accompagnée de vos commentaires et de la notification de remise des supports de cours.",
-		"L'absence de session de rattrapage ou plusieurs insatisfactions apprenants sur votre pédagogie et/ou compétences techniques.",
-		"Votre engagement à respecter notre démarche qualité conformément à notre certification Qualiopi avec respect du référentiel national en vigueur sur la prestation confiée."
-	],
-	"rgpdUrl": "https://www.example.com/mentions-legales"
-}
+[
+  {
+    "document": {
+      "orderNumber": "ACDE25-01771",
+      "orderDate": "2025-03-19T00:00:00Z",
+      "page": 1
+    },
+    "vendor": {
+      "companyName": "WebCraft Learning",
+      "legalForm": "SARL",
+      "rcs": "RCS LYON n° 982 223 000",
+      "headquarters": "1 rue Roger Lenoir, 69100 Villeurbanne",
+      "representative": "Stéphane RAVET",
+      "siret": "982 223 000 00018",
+      "naf": "8559A",
+      "tva": "FR05982223000",
+      "nda": "84 69 21950 69"
+    },
+    "customer": {
+      "companyName": "SOCIETE ANONYME",
+      "addresses": [
+        {
+          "addressLine": "123 rue Example",
+          "postalCode": "75000",
+          "city": "PARIS",
+          "country": "France"
+        }
+      ],
+      "contact": {
+        "name": "John Doe",
+        "email": "contact@example.com"
+      },
+      "billingEmail": "facturation@example.com",
+      "code": "10110",
+      "siren": "123 456 789",
+      "rcs": "RCS Paris 123 456 789",
+      "naf": null,
+      "siret": [
+        "123 456 789 00000"
+      ],
+      "tva": "FR12345678900",
+      "declarationNumber": "11 75 12345 75",
+      "legalForm": "SARL",
+      "capital": "10000"
+    },
+    "orderLines": [
+      {
+        "reference": "JVS-ANGU",
+        "label": "ANGULAR 18 ET VERSIONS ANTÉRIEURES - DÉVELOPPEMENT D'APPLICATIONS WEB",
+        "internalCode": "SE25-190417",
+        "quantity": 3,
+        "unit": "Jour",
+        "unitPrice": 650,
+        "discountPercent": 0,
+        "totalExclTax": 1950
+      }
+    ],
+    "training": {
+      "trainer": "Stéphane Ravet",
+      "title": "ANGULAR 18 ET VERSIONS ANTÉRIEURES - DÉVELOPPEMENT D'APPLICATIONS WEB",
+      "content": [
+        "Formation : ANGULAR 18 ET VERSIONS ANTÉRIEURES - DÉVELOPPEMENT D'APPLICATIONS WEB",
+        "Sanction : Aucune"
+      ],
+      "means": "Pédagogie basée sur l'alternance de la théorie et de la pratique pour permettre l'appropriation et progressivité par les apprenants selon les objectifs du programme",
+      "modality": "Distanciel",
+      "location": "Classe à distance (Teams)",
+      "sessions": [
+        {
+          "date": "2025-03-24",
+          "startTimes": [
+            "09:00"
+          ],
+          "breaks": [
+            {
+              "start": "12:30",
+              "end": "13:30"
+            }
+          ],
+          "endTimes": [
+            "17:30"
+          ]
+        },
+        {
+          "date": "2025-03-25",
+          "startTimes": [
+            "09:00"
+          ],
+          "breaks": [
+            {
+              "start": "12:30",
+              "end": "13:30"
+            }
+          ],
+          "endTimes": [
+            "17:30"
+          ]
+        },
+        {
+          "date": "2025-03-26",
+          "startTimes": [
+            "09:00"
+          ],
+          "breaks": [
+            {
+              "start": "12:30",
+              "end": "13:30"
+            }
+          ],
+          "endTimes": [
+            "16:00"
+          ]
+        }
+      ]
+    },
+    "amounts": {
+      "totalExclTax": 1950,
+      "totalVAT": 0,
+      "totalInclTax": 1950,
+      "currency": "EUR"
+    },
+    "paymentTerms": "30 jours nets date de réception du dossier complet",
+    "conditions": [
+      "En nos locaux : la prise en charge de votre salle, de vos stagiaires chaque matin et tout au long de la journée.",
+      "La restitution des feuilles de présences émargées par les stagiaires et vous-même, des fiches d'évaluation de fin de stage dûment remplies, de votre fiche d'intervention accompagnée de vos commentaires et de la notification de remise des supports de cours.",
+      "L'absence de session de rattrapage ou plusieurs insatisfactions apprenants sur votre pédagogie et/ou compétences techniques.",
+      "Votre engagement à respecter notre démarche qualité conformément à notre certification Qualiopi avec respect du référentiel national en vigueur sur la prestation confiée."
+    ],
+    "rgpdUrl": "https://www.example.com/mentions-legales"
+  }
+]

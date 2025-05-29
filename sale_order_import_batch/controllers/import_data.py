@@ -4,75 +4,136 @@ from odoo.http import request
 import json
 from datetime import datetime
 import logging
+from typing import Dict, List, Any, Optional, Union
 from odoo.exceptions import ValidationError, UserError
 
 _logger = logging.getLogger(__name__)
 
+# Constants
+ERROR_CODES = {
+    'INVALID_FORMAT': 'Invalid data format',
+    'VALIDATION_ERROR': 'Validation error',
+    'ORDER_EXISTS': 'Order already exists',
+    'PARTNER_ERROR': 'Partner creation error',
+    'ORDER_ERROR': 'Order creation error',
+    'LINES_ERROR': 'Order lines creation error',
+    'SESSIONS_ERROR': 'Training sessions creation error',
+    'UNKNOWN_ERROR': 'Unknown error'
+}
+
 class ImportDataController(http.Controller):
     @http.route('/api/v1/sale/order/import/batch', type='json', auth='api_key', methods=['POST'], csrf=False)
-    def import_order(self, **kwargs):
+    def import_order(self, **kwargs) -> Dict[str, Any]:
+        """
+        Import multiple sale orders from JSON data.
+        
+        Args:
+            **kwargs: Additional arguments passed by Odoo
+            
+        Returns:
+            Dict containing:
+                - success (bool): True if all orders were imported successfully
+                - results (List[Dict]): List of results for each order
+        """
         try:
             content = request.jsonrequest
-            if not content or not isinstance(content, list):
-                return {'error': 'Invalid data format', 'code': 'INVALID_FORMAT'}
+            if not self._validate_input_format(content):
+                return self._create_error_response(ERROR_CODES['INVALID_FORMAT'])
 
-            order_data = content[0]['message']['content']
-            
-            # Validate required data
-            validation_result = self._validate_order_data(order_data)
-            if not validation_result['valid']:
-                return {'error': validation_result['message'], 'code': 'VALIDATION_ERROR'}
-
-            # Check if order already exists
-            existing_order = self._check_existing_order(order_data['document']['orderNumber'])
-            if existing_order:
-                return {
-                    'warning': 'Order already exists',
-                    'order_id': existing_order.id,
-                    'message': f'Order {order_data["document"]["orderNumber"]} already exists',
-                    'code': 'ORDER_EXISTS'
-                }
-
-            # Create or update customer
-            try:
-                partner = self._create_or_update_partner(order_data['customer'])
-            except Exception as e:
-                return {'error': f'Error creating partner: {str(e)}', 'code': 'PARTNER_ERROR'}
-            
-            # Create order
-            try:
-                order = self._create_sale_order(order_data, partner)
-            except Exception as e:
-                return {'error': f'Error creating order: {str(e)}', 'code': 'ORDER_ERROR'}
-            
-            # Create order lines
-            try:
-                self._create_order_lines(order, order_data['orderLines'])
-            except Exception as e:
-                return {'error': f'Error creating order lines: {str(e)}', 'code': 'LINES_ERROR'}
-            
-            # Create training sessions
-            try:
-                self._create_training_sessions(order, order_data['training'])
-            except Exception as e:
-                return {'error': f'Error creating training sessions: {str(e)}', 'code': 'SESSIONS_ERROR'}
+            results = []
+            for order_data in content:
+                result = self._process_single_order(order_data)
+                results.append(result)
+                _logger.info(f"Processed order {order_data.get('document', {}).get('orderNumber', 'Unknown')}: {result.get('code')}")
 
             return {
-                'success': True,
-                'order_id': order.id,
-                'message': 'Order successfully imported',
-                'code': 'SUCCESS'
+                'success': all(r.get('success', False) for r in results),
+                'results': results
             }
 
         except ValidationError as ve:
             _logger.error(f"Validation error: {str(ve)}")
-            return {'error': str(ve), 'code': 'VALIDATION_ERROR'}
+            return self._create_error_response(ERROR_CODES['VALIDATION_ERROR'], str(ve))
         except UserError as ue:
             _logger.error(f"User error: {str(ue)}")
-            return {'error': str(ue), 'code': 'USER_ERROR'}
+            return self._create_error_response(ERROR_CODES['VALIDATION_ERROR'], str(ue))
         except Exception as e:
-            _logger.error(f"Error importing order: {str(e)}")
-            return {'error': str(e), 'code': 'UNKNOWN_ERROR'}
+            _logger.error(f"Error importing orders: {str(e)}")
+            return self._create_error_response(ERROR_CODES['UNKNOWN_ERROR'], str(e))
+
+    def _validate_input_format(self, content: Any) -> bool:
+        """Validate the input format of the request."""
+        return bool(content and isinstance(content, list))
+
+    def _create_error_response(self, code: str, message: Optional[str] = None) -> Dict[str, Any]:
+        """Create a standardized error response."""
+        return {
+            'error': message or ERROR_CODES.get(code, 'Unknown error'),
+            'code': code
+        }
+
+    def _process_single_order(self, order_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Process a single order from the input data.
+        
+        Args:
+            order_data: Dictionary containing order information
+            
+        Returns:
+            Dict containing the result of the operation
+        """
+        order_number = order_data.get('document', {}).get('orderNumber', 'Unknown')
+        
+        try:
+            # Validate required data
+            validation_result = self._validate_order_data(order_data)
+            if not validation_result['valid']:
+                return {
+                    'error': validation_result['message'],
+                    'code': ERROR_CODES['VALIDATION_ERROR'],
+                    'order_number': order_number
+                }
+
+            # Check if order already exists
+            existing_order = self._check_existing_order(order_number)
+            if existing_order:
+                return {
+                    'warning': ERROR_CODES['ORDER_EXISTS'],
+                    'order_id': existing_order.id,
+                    'message': f'Order {order_number} already exists',
+                    'code': 'ORDER_EXISTS'
+                }
+
+            # Process order creation steps
+            try:
+                partner = self._create_or_update_partner(order_data['customer'])
+                order = self._create_sale_order(order_data, partner)
+                self._create_order_lines(order, order_data['orderLines'])
+                self._create_training_sessions(order, order_data['training'])
+                
+                return {
+                    'success': True,
+                    'order_id': order.id,
+                    'message': 'Order successfully imported',
+                    'code': 'SUCCESS',
+                    'order_number': order_number
+                }
+                
+            except Exception as e:
+                _logger.error(f"Error processing order {order_number}: {str(e)}")
+                return {
+                    'error': str(e),
+                    'code': ERROR_CODES['UNKNOWN_ERROR'],
+                    'order_number': order_number
+                }
+
+        except Exception as e:
+            _logger.error(f"Unexpected error processing order {order_number}: {str(e)}")
+            return {
+                'error': str(e),
+                'code': ERROR_CODES['UNKNOWN_ERROR'],
+                'order_number': order_number
+            }
 
     @http.route('/import_batch/order', type='json', auth='user', methods=['POST'], csrf=False)
     def import_order_batch(self, **kwargs):
