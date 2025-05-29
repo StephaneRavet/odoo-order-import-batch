@@ -4,7 +4,7 @@
     "summary": "Batch import of orders",
     "category": "Tools",
     "author": "Stéphane Ravet",
-    "website": "https://github.com/StephaneRavet/odoo-sale-order-import-batch",
+    "website": "https://www.linkedin.com/in/sabrina-ravet/",
     "depends": ["base", "sale"],
     "installable": True,
     "application": False,
