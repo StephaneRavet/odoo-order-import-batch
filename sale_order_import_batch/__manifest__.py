@@ -13,5 +13,5 @@
     "installable": True,
     "application": False,
     "auto_install": True,
-    "license": "MIT",
+    "license": "LGPL-3",
 }
