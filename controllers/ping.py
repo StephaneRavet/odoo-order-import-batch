@@ -1,6 +1,11 @@
 from odoo import http
+import json
 
 class PingController(http.Controller):
-    @http.route('/odoo/api/ping', type='http', auth='public', methods=['GET'], csrf=False)
+    @http.route('/api/ping', type='json', auth='public', methods=['GET'], csrf=False)
     def test_ping(self):
-        return "pong"
+        print("ping-pong")
+        return http.Response(
+            json.dumps({"status": "ok", "message": "pong"}),
+            content_type='application/json'
+        )

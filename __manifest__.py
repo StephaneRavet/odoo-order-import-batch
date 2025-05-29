@@ -4,7 +4,7 @@
     "summary": "Batch import of orders",
     "category": "Tools",
     "author": "Stéphane Ravet",
-    "website": "https://www.linkedin.com/in/sabrina-ravet/",
+    "website": "https://www.odoo.com/fr_FR",
     "depends": ["base", "sale"],
     "installable": True,
     "application": False,
