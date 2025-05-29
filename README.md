@@ -1,4 +1,4 @@
-# odoo-order-import-batch
+# sale_order_import-batch_2
 
 > Compatible Odoo version: **18**
 
@@ -18,13 +18,13 @@ This Odoo module provides automated order import functionality via a REST API. I
 ## Project Structure
 
 ```
-odoo-order-import-batch/
-├── import_batch/
+sale_order_import-batch_2/
+├── __init__.py
+├── __manifest__.py
+├── controllers/
 │   ├── __init__.py
-│   ├── __manifest__.py
-│   ├── controllers/
-│   │   ├── __init__.py
-│   │   └── order_import.py
+│   ├── main.py
+│   └── ping.py
 ├── README.md
 ```
 
@@ -32,11 +32,24 @@ odoo-order-import-batch/
 
 1. Copy the module to Odoo's `addons` directory
 2. Update the module list in Odoo
-3. Install the "Import Batch Orders" module
+3. Install the "Sale Order Import Batch" module
 
 ## API Usage
 
-### Endpoint
+### Test Endpoint
+```
+GET /api/ping
+```
+
+#### Response
+```json
+{
+  "status": "ok",
+  "message": "pong"
+}
+```
+
+### Import Endpoint
 ```
 POST /api/v1/order/import
 ```
