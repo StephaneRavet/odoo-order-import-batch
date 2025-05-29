@@ -8,7 +8,7 @@ This Odoo module provides batch import functionality for orders.
 
 ```
 odoo-order-import-batch/
-├── import_batch/
+├── import_batch/   # ou order-import-batch
 │   ├── __init__.py
 │   ├── __manifest__.py
 │   ├── controllers/
