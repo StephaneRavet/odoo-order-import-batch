@@ -4,10 +4,14 @@
     'summary': 'Batch import of orders',
     'category': 'Tools',
     'author': 'Stéphane Ravet',
-    'website': 'https://github.com/StephaneRavet/odoo-sale-order-import-batch',
+    'website': 'https://www.linkedin.com/in/stéphane-ravet/',
     'depends': ['base', 'sale'],
-    'data': [],
+    'data': [
+        'security/ir.model.access.csv',
+        'security/ir.config_parameter.csv',
+    ],
     'installable': True,
     'application': False,
     'auto_install': False,
+    'license': 'LGPL-3',
 } 
