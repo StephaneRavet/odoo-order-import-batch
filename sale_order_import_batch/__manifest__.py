@@ -6,10 +6,6 @@
     "author": "Stéphane Ravet",
     "website": "https://github.com/StephaneRavet/odoo-sale-order-import-batch",
     "depends": ["base", "sale"],
-    "data": [
-        "security/ir.model.access.csv",
-        "security/ir.config_parameter.csv",
-    ],
     "installable": True,
     "application": False,
     "auto_install": True,

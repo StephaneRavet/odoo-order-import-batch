@@ -22,7 +22,7 @@ ERROR_CODES = {
 }
 
 class ImportDataController(http.Controller):
-    @http.route('/api/v1/sale/order/import/batch', type='json', auth='api_key', methods=['POST'], csrf=False)
+    @http.route('/odoo/api/v1/sale/order/import/batch', type='json', auth='api_key', methods=['POST'], csrf=False)
     def import_order(self, **kwargs) -> Dict[str, Any]:
         """
         Import multiple sale orders from JSON data.
